@@ -1,0 +1,16 @@
+[project]
+name = "python"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "google-api-core>=2.24.2",
+    "google-genai>=1.10.0",
+    "pandas>=2.2.3",
+    "plotly>=6.0.1",
+    "pydantic>=2.11.3",
+    "pyyaml>=6.0.2",
+    "ruff>=0.11.4",
+    "streamlit>=1.44.1",
+]
