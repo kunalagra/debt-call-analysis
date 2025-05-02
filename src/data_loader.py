@@ -1,12 +1,15 @@
 # data_loader.py
-import os
 import json
 import logging
-from typing import Any, Optional, Dict
+import os
+from typing import Any
+
 import pandas as pd
+
 # We avoid streamlit imports here for better separation
 
-def parse_json_to_df(json_file_content: Any) -> Optional[pd.DataFrame]:
+
+def parse_json_to_df(json_file_content: Any) -> pd.DataFrame | None:
     """Parses JSON content (from uploaded file or opened file) into a Pandas DataFrame."""
     try:
         # Handle file-like objects (uploaded file) vs. lists (direct data)
@@ -16,19 +19,23 @@ def parse_json_to_df(json_file_content: Any) -> Optional[pd.DataFrame]:
             if isinstance(json_data_str, bytes):
                 json_data_str = json_data_str.decode("utf-8")
             data = json.loads(json_data_str)
-        elif isinstance(json_file_content, (str, bytes)): # Handle raw string/bytes content
-             if isinstance(json_file_content, bytes):
+        elif isinstance(
+            json_file_content, (str, bytes)
+        ):  # Handle raw string/bytes content
+            if isinstance(json_file_content, bytes):
                 json_data_str = json_file_content.decode("utf-8")
-             else:
-                 json_data_str = json_file_content
-             data = json.loads(json_data_str)
+            else:
+                json_data_str = json_file_content
+            data = json.loads(json_data_str)
         elif isinstance(json_file_content, list):
-            data = json_file_content # Assume it's already parsed list of dicts
+            data = json_file_content  # Assume it's already parsed list of dicts
         else:
-            logging.error(f"Unsupported input type for JSON parsing: {type(json_file_content)}")
+            logging.error(
+                f"Unsupported input type for JSON parsing: {type(json_file_content)}"
+            )
             # Raise error or return None, depending on desired handling
             # raise TypeError(f"Unsupported input type: {type(json_file_content)}")
-            return None # Keep consistent with original return type
+            return None  # Keep consistent with original return type
 
         df = pd.DataFrame(data)
         required_cols = ["speaker", "text", "stime", "etime"]
@@ -54,7 +61,9 @@ def parse_json_to_df(json_file_content: Any) -> Optional[pd.DataFrame]:
         df = df[df["duration"] >= 0]
 
         if df.empty:
-            logging.warning("DataFrame is empty after filtering negative duration utterances.")
+            logging.warning(
+                "DataFrame is empty after filtering negative duration utterances."
+            )
             return None
 
         return df
@@ -64,12 +73,14 @@ def parse_json_to_df(json_file_content: Any) -> Optional[pd.DataFrame]:
         # Let the caller handle UI feedback
         return None
     except Exception as e:
-        logging.error(f"An unexpected error occurred during JSON parsing: {e}", exc_info=True)
+        logging.error(
+            f"An unexpected error occurred during JSON parsing: {e}", exc_info=True
+        )
         # Let the caller handle UI feedback
         return None
 
 
-def load_all_calls(directory: str, progress_callback=None) -> Dict[str, pd.DataFrame]:
+def load_all_calls(directory: str, progress_callback=None) -> dict[str, pd.DataFrame]:
     """
     Loads all JSON call transcripts from a specified directory into a dictionary.
 
@@ -85,13 +96,13 @@ def load_all_calls(directory: str, progress_callback=None) -> Dict[str, pd.DataF
     if not os.path.isdir(directory):
         logging.error(f"Directory not found: {directory}")
         # Caller should handle UI feedback (e.g., st.error)
-        return call_data # Return empty dict
+        return call_data  # Return empty dict
 
     try:
         files_to_process = [f for f in os.listdir(directory) if f.endswith(".json")]
     except OSError as e:
         logging.error(f"Error listing directory {directory}: {e}")
-        return call_data # Return empty dict
+        return call_data  # Return empty dict
 
     if not files_to_process:
         logging.warning(f"No JSON files found in directory: {directory}")
@@ -103,7 +114,7 @@ def load_all_calls(directory: str, progress_callback=None) -> Dict[str, pd.DataF
         call_id = filename.replace(".json", "")
         filepath = os.path.join(directory, filename)
         try:
-            with open(filepath, "r", encoding="utf-8") as file:
+            with open(filepath, encoding="utf-8") as file:
                 # Pass the raw file content string/bytes to the parser
                 content = file.read()
                 df = parse_json_to_df(content)
@@ -112,7 +123,9 @@ def load_all_calls(directory: str, progress_callback=None) -> Dict[str, pd.DataF
                     logging.debug(f"Successfully loaded and parsed {filename}")
                 else:
                     # parse_json_to_df logs specific errors
-                    logging.warning(f"Skipping file {filename} due to parsing errors or empty data.")
+                    logging.warning(
+                        f"Skipping file {filename} due to parsing errors or empty data."
+                    )
         except Exception as e:
             logging.error(f"Failed to load or process file {filename}: {e}")
             # Optionally report this specific file error via callback or just log it
@@ -124,8 +137,11 @@ def load_all_calls(directory: str, progress_callback=None) -> Dict[str, pd.DataF
             except Exception as cb_e:
                 logging.warning(f"Progress callback failed: {cb_e}")
 
-
-    logging.info(f"Successfully loaded {len(call_data)} calls out of {total_files} files found.")
+    logging.info(
+        f"Successfully loaded {len(call_data)} calls out of {total_files} files found."
+    )
     if not call_data and files_to_process:
-        logging.warning("Finished loading, but no valid call data could be processed from the found files.")
+        logging.warning(
+            "Finished loading, but no valid call data could be processed from the found files."
+        )
     return call_data

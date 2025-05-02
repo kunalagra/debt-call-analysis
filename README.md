@@ -28,19 +28,25 @@ This project analyzes debt collection call transcripts (provided as JSON files) 
 ## Project Structure
 
 ```
+
 debt-call-analysis/
-├── app.py                  # Main Streamlit application UI
-├── config.py               # Configuration, constants, API keys (env), regex patterns
-├── data_loader.py          # Data loading and parsing logic (JSON -> DataFrame)
-├── batch_processor.py      # Orchestrates analysis for multiple files
-├── analysis/
-│   ├── __init__.py         # Makes 'analysis' a Python package
-│   ├── regex_analyzer.py   # Regex-based detection functions
-│   ├── llm_analyzer.py     # LLM (Google Gemini) based detection functions & client setup
-│   └── metrics_analyzer.py # Overtalk and silence calculation functions
-├── requirements.txt        # Python package dependencies
-└── README.md               # This file
-└── All_Conversations.zip   # Zip File of the Data
+├── docs/
+│   ├── All_Conversations.zip           # Dataset
+│   ├── Assignment.md                   # Task Definition
+│   └── Technical Report.md
+├── pyproject.toml
+├── requirements.txt
+├── src/
+│   ├── analysis/
+│   │   ├── __init__.py
+│   │   ├── llm_analyzer.py
+│   │   ├── metrics_analyzer.py
+│   │   └── regex_analyzer.py
+│   ├── app.py                          # Streamlit entry point
+│   ├── batch_processor.py              # Orchestrates analysis for multiple files
+│   ├── config.py                       # Configuration, constants, API keys, regex patterns
+│   └── data_loader.py                  # Data loading and parsing
+└── README.md
 
 ```
 
@@ -56,7 +62,7 @@ debt-call-analysis/
 2. **Use uv (Recommended):**
     ```bash
     uv sync
-    uv run streamlit run app.py
+    uv run streamlit run src/app.py
     ```
 ###        OR 
 

@@ -1,10 +1,9 @@
-import logging
-import pandas as pd
-from typing import Tuple
 from collections import defaultdict
-import numpy as np # For handling potential infinities
 
-def calculate_call_metrics(call_df: pd.DataFrame) -> Tuple[float, float, float]:
+import pandas as pd
+
+
+def calculate_call_metrics(call_df: pd.DataFrame) -> tuple[float, float, float]:
     if call_df is None or call_df.empty:
         return 0.0, 0.0, 0.0
     call_df = call_df.sort_values(by="stime").reset_index(drop=True)

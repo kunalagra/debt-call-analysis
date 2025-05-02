@@ -1,54 +1,69 @@
-import logging
-import time
 import json
+import logging
 import os
-from typing import Tuple, Optional, List, Dict, Any
+import time
 
 import pandas as pd
-from pydantic import BaseModel, ValidationError
-import streamlit as st # Needed for caching and secrets
+import streamlit as st  # Needed for caching and secrets
+from pydantic import BaseModel
 
 # Attempt to import Google GenAI libraries
 try:
     from google import genai
-    from google.genai import types
     from google.api_core import exceptions as google_api_exceptions
+    from google.genai import types
+
     GENAI_AVAILABLE = True
 except ImportError:
     genai = None
     types = None
     google_api_exceptions = None
     GENAI_AVAILABLE = False
-    logging.warning("`google-generativeai` library not installed. LLM features will be unavailable.")
+    logging.warning(
+        "`google-generativeai` library not installed. LLM features will be unavailable."
+    )
     # UI warnings should be handled in app.py based on GENAI_AVAILABLE
 
 # Import constants from config
 from config import (
-    GEMINI_MODEL_NAME,
     AGENT_SPEAKER_ID,
-    BORROWER_SPEAKER_ID
     # GOOGLE_API_KEY is loaded from config, but secrets take precedence
+    GEMINI_MODEL_NAME,
 )
+
 
 # --- Pydantic Models for Response Validation ---
 class ProfanityResult(BaseModel):
     agent_profanity: str
     borrower_profanity: str
 
+
 class PrivacyResult(BaseModel):
     agent_violation: str
+
 
 # --- Default LLM Settings ---
 DEFAULT_SAFETY_SETTINGS = (
     [
-        types.SafetySetting(category="HARM_CATEGORY_HARASSMENT", threshold="BLOCK_MEDIUM_AND_ABOVE"),
-        types.SafetySetting(category="HARM_CATEGORY_HATE_SPEECH", threshold="BLOCK_MEDIUM_AND_ABOVE"),
-        types.SafetySetting(category="HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold="BLOCK_MEDIUM_AND_ABOVE"),
-        types.SafetySetting(category="HARM_CATEGORY_DANGEROUS_CONTENT", threshold="BLOCK_MEDIUM_AND_ABOVE"),
+        types.SafetySetting(
+            category="HARM_CATEGORY_HARASSMENT", threshold="BLOCK_MEDIUM_AND_ABOVE"
+        ),
+        types.SafetySetting(
+            category="HARM_CATEGORY_HATE_SPEECH", threshold="BLOCK_MEDIUM_AND_ABOVE"
+        ),
+        types.SafetySetting(
+            category="HARM_CATEGORY_SEXUALLY_EXPLICIT",
+            threshold="BLOCK_MEDIUM_AND_ABOVE",
+        ),
+        types.SafetySetting(
+            category="HARM_CATEGORY_DANGEROUS_CONTENT",
+            threshold="BLOCK_MEDIUM_AND_ABOVE",
+        ),
     ]
-    if types # Only define if types module was imported
+    if types  # Only define if types module was imported
     else []
 )
+
 
 # --- GenAI Client Initialization (Cached) ---
 @st.cache_resource(show_spinner="Connecting to Google GenAI...")
@@ -68,20 +83,23 @@ def get_genai_client():
 
             client = genai.Client(api_key=api_key)
 
-
-
             # Basic verification (optional, might consume quota)
             # _ = client.generate_content("test", generation_config=types.GenerationConfig(max_output_tokens=5))
             logging.info("Google GenAI Client appears initialized.")
-            return client # Return the model instance directly or a client object if needed
+            return client  # Return the model instance directly or a client object if needed
         except Exception as e:
-            logging.error(f"Failed to initialize Google GenAI client/model: {e}", exc_info=True)
+            logging.error(
+                f"Failed to initialize Google GenAI client/model: {e}", exc_info=True
+            )
             # Let the caller handle UI error reporting
             return None
     else:
-        logging.warning("Google API Key not found in Streamlit Secrets or environment variables.")
+        logging.warning(
+            "Google API Key not found in Streamlit Secrets or environment variables."
+        )
         # Let the caller handle UI error reporting
         return None
+
 
 # --- LLM Helper Functions ---
 def _format_transcript_for_llm(call_df: pd.DataFrame) -> str:
@@ -93,20 +111,22 @@ def _format_transcript_for_llm(call_df: pd.DataFrame) -> str:
     call_df_sorted = call_df.sort_values(by="stime")
     for _, row in call_df_sorted.iterrows():
         speaker_label = "Agent" if row["speaker"] == AGENT_SPEAKER_ID else "Customer"
-        text_content = str(row["text"]) if pd.notna(row["text"]) else "[empty utterance]"
+        text_content = (
+            str(row["text"]) if pd.notna(row["text"]) else "[empty utterance]"
+        )
         transcript.append(f"{speaker_label}: {text_content}")
     return "\n".join(transcript)
 
 
 def _call_gemini_api_sdk(
     contents: str,
-    generation_config: Optional[types.GenerationConfig] = None,
-    safety_settings: Optional[List[types.SafetySetting]] = None,  # Default to None here
-    response_mime_type: Optional[str] = None,
-    response_schema: Optional[str] = None,
+    generation_config: types.GenerationConfig | None = None,
+    safety_settings: list[types.SafetySetting] | None = None,  # Default to None here
+    response_mime_type: str | None = None,
+    response_schema: str | None = None,
     max_retries: int = 2,
     delay: int = 5,
-) -> Optional[str]:
+) -> str | None:
     """
     Helper function to call the Gemini API using google-genai SDK
     with error handling and retries.
@@ -242,10 +262,11 @@ def _call_gemini_api_sdk(
 
     return None  # Fallback if all retries fail
 
+
 # --- LLM Analysis Functions ---
 
 
-def detect_profanity_llm(call_df: pd.DataFrame) -> Tuple[bool, bool]:
+def detect_profanity_llm(call_df: pd.DataFrame) -> tuple[bool, bool]:
     agent_profane = False
     borrower_profane = False
     if call_df is None or call_df.empty:
@@ -356,4 +377,3 @@ def detect_privacy_violation_llm(call_df: pd.DataFrame) -> bool:
             logging.error(f"LLM Privacy Processing Error: {e}", exc_info=True)
             st.warning(f"Error processing LLM Privacy response: {e}")
     return violation_detected
-
