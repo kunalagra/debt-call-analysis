@@ -1,9 +1,9 @@
 [project]
-name = "Debt Call Analysis"
+name = "debt_call_analysis"
 version = "0.1.0"
 description = "Analyze call transcripts"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.12"
 dependencies = [
     "google-api-core>=2.24.2",
     "google-genai>=1.10.0",
