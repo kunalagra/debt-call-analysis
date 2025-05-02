@@ -1,9 +1,9 @@
 [project]
-name = "python"
+name = "Debt Call Analysis"
 version = "0.1.0"
-description = "Add your description here"
+description = "Analyze call transcripts"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.13"
 dependencies = [
     "google-api-core>=2.24.2",
     "google-genai>=1.10.0",
@@ -21,9 +21,8 @@ line-length = 88
 target-version = "py313"
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "UP"]            # formerly top‑level `select` :contentReference[oaicite:1]{index=1}
-ignore = ["W391"]                         # formerly top‑level `ignore` :contentReference[oaicite:2]{index=2}
-per-file-ignores = { "tests/*" = ["A003"] }  # formerly top‑level `per-file-ignores` :contentReference[oaicite:3]{index=3}
+select = ["E", "F", "I", "UP"]
+ignore = ["W391"]             
 
 [tool.ruff.format]
 preview = true
